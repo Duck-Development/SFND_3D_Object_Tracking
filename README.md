@@ -31,5 +31,6 @@ In this final project, you will implement the missing parts in the schematic. To
 
 1. Clone this repo.
 2. Make a build directory in the top level project directory: `mkdir build && cd build`
-3. Compile: `cmake .. && make`
-4. Run it: `./3D_object_tracking`.
+3. Comfigure: `cmake -G "Visual Studio 16 2019" -a  Win64 -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON  -DOpenCV_DIR=C:\pcl-ownBuild\install\x64\vc16\lib  -DCMAKE_CXX_FLAGS=-I\ %include% .. && make`
+4. Compile: `cmake --build . --clean-first --config Release --target ALL_BUILD`
+4. Run it: `./Release/3D_object_tracking`.
