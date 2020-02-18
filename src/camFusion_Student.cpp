@@ -152,6 +152,7 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
     std::map<int,  int > mapper;
     for (auto cbbi = 0; cbbi < currFrame.boundingBoxes.size(); ++cbbi)
     {
+        mapper.clear();
         auto &cbb = currFrame.boundingBoxes.at(cbbi);
         for (auto cmi = 0; cmi < matches.size(); ++cmi)
         {
@@ -165,7 +166,7 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
                 cbb.keypoints.push_back(ckp);
                 cbb.kptMatches.push_back(matches.at(cmi));
 
-                const auto pkpi = matches.at(cmi).trainIdx;
+                const auto pkpi = matches.at(cmi).queryIdx;
                 const auto pkp = prevFrame.keypoints.at(pkpi);
                 for (auto pbbi = 0; pbbi < prevFrame.boundingBoxes.size(); ++pbbi)
                 {
@@ -179,12 +180,26 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
                         mapper[pbbi]++;
 
                     }
-                }
+                } 
             }
         }
         // 
         int bestMatch = -1;
         int bestCount = 0;
 
+        for (const auto & match : mapper)
+        {
+            if (match.second >  bestCount)
+            {
+                bestCount =match.second;
+                bestMatch = match.first;
+
+            }
+        }
+        if (bestCount > 0 ){
+            bbBestMatches[cbbi] = bestMatch;
+        } else {
+            std::cout << "no Match for BBI:" << cbbi << std::endl; 
+        }
     }
 }
