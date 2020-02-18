@@ -157,7 +157,7 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
         for (auto cmi = 0; cmi < matches.size(); ++cmi)
         {
 
-            const auto ckpi = matches.at(cmi).imgIdx;
+            const auto ckpi = matches.at(cmi).trainIdx;
 
             const auto ckp = currFrame.keypoints.at(ckpi);
 
