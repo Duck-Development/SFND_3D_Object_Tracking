@@ -131,25 +131,144 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 // associate a given bounding box with the keypoints it contains
 void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
 {
-    // ...
+    boundingBox.kptMatches.clear();
+    std::vector<double> dist;
+    double distSum;
+    for (auto it = kptMatches.begin(); it != kptMatches.end(); ++it)
+    {
+        cv::KeyPoint prvKeyPoint = kptsPrev[it->queryIdx];
+        cv::KeyPoint curKeyPoint = kptsCurr[it->trainIdx];
+        if (boundingBox.roi.contains(prvKeyPoint.pt) && boundingBox.roi.contains(curKeyPoint.pt))
+        {
+            cv::Point2f diff = curKeyPoint.pt - prvKeyPoint.pt;
+            double distant = cv::sqrt(diff.x * diff.x + diff.y * diff.y);
+            distSum += distant;
+            dist.push_back(distant);
+            boundingBox.kptMatches.push_back(*it);
+            continue;
+        }
+    }
+    auto mean = distSum / dist.size();
+    for (size_t i = 0; i < dist.size(); i++)
+    {
+        if (dist[i] > mean)
+        {
+            boundingBox.kptMatches.erase(boundingBox.kptMatches.begin() + i);
+            dist.erase(dist.begin() + i);
+        }
+    }
 }
 
 // Compute time-to-collision (TTC) based on keypoint correspondences in successive images
 void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr,
                       std::vector<cv::DMatch> kptMatches, double frameRate, double &TTC, cv::Mat *visImg)
 {
-    // ...
+
+    vector<double> distRatios;
+    const auto minDist = 105.0; // minimal dis of KeyPoints
+    for (auto outIT = kptMatches.begin()  ;  outIT != kptMatches.end()-1 ; ++outIT)
+    { 
+        auto kpOuterCurr = kptsCurr.at(outIT->trainIdx);
+        auto kpOuterPrev = kptsPrev.at(outIT->queryIdx);
+
+        for (auto inIT = outIT+1  ;  inIT != kptMatches.end(); ++inIT){
+            auto kpInnerCurr = kptsCurr.at(inIT->trainIdx);
+            auto kpInnerPrev = kptsPrev.at(inIT->queryIdx);
+
+            
+            auto distCurr = cv::norm(kpOuterCurr.pt - kpInnerCurr.pt);
+            auto distPrev = cv::norm(kpOuterPrev.pt - kpInnerPrev.pt);
+
+            // No devide by Zero and do not use points witch distance then less minDist
+            if (distPrev > std::numeric_limits<double>::epsilon() && distCurr >= minDist)
+            { 
+
+                distRatios.push_back(distCurr / distPrev);
+            }
+        } 
+    }    
+
+    if (distRatios.size() == 0)
+    {
+        TTC = std::numeric_limits<double>::quiet_NaN();
+        return;
+    }
+
+
+    auto meanDistRatio = std::accumulate(distRatios.begin(), distRatios.end(), 0.0) / distRatios.size();
+
+
+    std::sort(distRatios.begin(), distRatios.end());
+    double medianRatio = 0.0;
+    auto half = distRatios.size() / 2;
+    if (distRatios.size() % 2 == 0)
+    {
+        medianRatio = (distRatios.at(half) + distRatios.at(half - 1)) / 2;
+    }
+    else
+    {
+        medianRatio = distRatios[half];
+    }
+   
+    
+    TTC = -1 / ((1 - medianRatio) *frameRate); 
+    std::cout << "###CAM_TTC:" << TTC <<std::endl;
+
+
+    
+
+}
+
+double getStableDistLidar(std::vector<LidarPoint> lidarPoints)
+{
+    //convert to 1D array
+    double distX = std::numeric_limits<double>::max();
+    double remesion = 0;
+    if (lidarPoints.size() > 0)
+    {
+        for (const auto &item : lidarPoints)
+        {
+            remesion += item.r;
+        }
+        remesion /= static_cast<double>(lidarPoints.size());
+
+        for (const auto &item : lidarPoints)
+        {
+            if (remesion <=  item.r && distX > item.x)
+            {
+                distX = item.x;
+            }
+        }
+    }
+    return distX;
 }
 
 void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
-                     std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
+                          std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
 {
-    // ...
+    if (lidarPointsPrev.size() > 0 && lidarPointsCurr.size() > 0)
+    {
+        auto distAct = getStableDistLidar(lidarPointsCurr);
+        auto distPre = getStableDistLidar(lidarPointsPrev);
+        auto relSpeed = (distAct - distPre) * frameRate;
+        
+        if (relSpeed < 0)
+        {
+            TTC = (-distAct / relSpeed); // time is Positiv
+
+            std::cout << "###LIDAR_TTC:" << TTC <<std::endl; 
+
+        }
+    }
+    else
+    {
+        TTC = std::numeric_limits<double>::quiet_NaN();
+    }
 }
 
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
-    std::map<int,  int > mapper;
+    std::map<int, int> mapper;
     for (auto cbbi = 0; cbbi < currFrame.boundingBoxes.size(); ++cbbi)
     {
         mapper.clear();
@@ -173,33 +292,34 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
                     const auto &pbb = prevFrame.boundingBoxes.at(pbbi);
                     if (pbb.roi.contains(pkp.pt))
                     {
-                        if(mapper.count(pbbi) == 0)
+                        if (mapper.count(pbbi) == 0)
                         {
-                            mapper[pbbi]=0;
+                            mapper[pbbi] = 0;
                         }
                         mapper[pbbi]++;
-
                     }
-                } 
+                }
             }
         }
-        // 
+        //
         int bestMatch = -1;
         int bestCount = 0;
 
-        for (const auto & match : mapper)
+        for (const auto &match : mapper)
         {
-            if (match.second >  bestCount)
+            if (match.second > bestCount)
             {
-                bestCount =match.second;
+                bestCount = match.second;
                 bestMatch = match.first;
-
             }
         }
-        if (bestCount > 0 ){
+        if (bestCount > 0)
+        {
             bbBestMatches[cbbi] = bestMatch;
-        } else {
-            std::cout << "no Match for BBI:" << cbbi << std::endl; 
+        }
+        else
+        {
+            std::cout << "no Match for BBI:" << cbbi << std::endl;
         }
     }
 }
