@@ -109,18 +109,18 @@ int main(int argc, const char *argv[])
 
     /* MAIN LOOP OVER ALL IMAGES */
 
-    vector<string> det = {"HARRIS", "SHITOMASI", "ORB", "SIFT", "FAST", "BRISK", "AKAZE"};
-    vector<string> desc = {"BRISK", "BRIEF", "ORB", "FREAK", "AKAZE", "SIFT"};
+    vector<string> det = {/*"HARRIS", "SHITOMASI", "ORB", */"SIFT"/*, "FAST", "BRISK", "AKAZE"*/};
+    vector<string> desc = {/*"BRISK", "BRIEF", "ORB", "FREAK", "AKAZE",*/ "SIFT"};
 
     
 
     for (string detectorType : det)
     {
-        cout << "Activ Detector: " << detectorType << endl;
+        cout << "###Activ Detector: " << detectorType << endl;
 
         for (string descriptorType : desc)
         {
-            cout << "Activ Descriptor: " << descriptorType << endl;
+            cout << "###Activ Descriptor: " << descriptorType << endl;
 
             if (
                 (descriptorType.compare("AKAZE") == 0 && detectorType.compare("AKAZE") != 0) || (detectorType.compare("SIFT") == 0 && descriptorType.compare("ORB") == 0))
@@ -146,7 +146,7 @@ int main(int argc, const char *argv[])
                 frame.cameraImg = img;
                 dataBuffer.push_back(frame);
 
-                cout << "#1 : LOAD IMAGE INTO BUFFER done" << endl;
+                //cout << "#1 : LOAD IMAGE INTO BUFFER done" << endl;
 
                 /* DETECT & CLASSIFY OBJECTS */
 
@@ -155,7 +155,7 @@ int main(int argc, const char *argv[])
                 detectObjects((dataBuffer.end() - 1)->cameraImg, (dataBuffer.end() - 1)->boundingBoxes, confThreshold, nmsThreshold,
                               yoloBasePath, yoloClassesFile, yoloModelConfiguration, yoloModelWeights, bVis);
 
-                cout << "#2 : DETECT & CLASSIFY OBJECTS done" << endl;
+                //cout << "#2 : DETECT & CLASSIFY OBJECTS done" << endl;
 
                 /* CROP LIDAR POINTS */
 
@@ -170,7 +170,7 @@ int main(int argc, const char *argv[])
 
                 (dataBuffer.end() - 1)->lidarPoints = lidarPoints;
 
-                cout << "#3 : CROP LIDAR POINTS done" << endl;
+                //cout << "#3 : CROP LIDAR POINTS done" << endl;
 
                 /* CLUSTER LIDAR POINT CLOUD */
 
@@ -186,7 +186,7 @@ int main(int argc, const char *argv[])
                 }
                 bVis = false;
 
-                cout << "#4 : CLUSTER LIDAR POINT CLOUD done" << endl;
+                //cout << "#4 : CLUSTER LIDAR POINT CLOUD done" << endl;
 
                 // REMOVE THIS LINE BEFORE PROCEEDING WITH THE FINAL PROJECT
                 //continue; // skips directly to the next image without processing what comes beneath
@@ -230,7 +230,7 @@ int main(int argc, const char *argv[])
                 // push keypoints and descriptor for current frame to end of data buffer
                 (dataBuffer.end() - 1)->keypoints = keypoints;
 
-                cout << "#5 : DETECT KEYPOINTS done" << endl;
+                //cout << "#5 : DETECT KEYPOINTS done" << endl;
 
                 /* EXTRACT KEYPOINT DESCRIPTORS */
 
@@ -242,7 +242,7 @@ int main(int argc, const char *argv[])
                 // push descriptors for current frame to end of data buffer
                 (dataBuffer.end() - 1)->descriptors = descriptors;
 
-                cout << "#6 : EXTRACT DESCRIPTORS done" << endl;
+                //cout << "#6 : EXTRACT DESCRIPTORS done" << endl;
 
                 if (dataBuffer.size() > 1) // wait until at least two images have been processed
                 {
@@ -266,7 +266,7 @@ int main(int argc, const char *argv[])
                     // store matches in current data frame
                     (dataBuffer.end() - 1)->kptMatches = matches;
 
-                    cout << "#7 : MATCH KEYPOINT DESCRIPTORS done" << endl;
+                    //cout << "#7 : MATCH KEYPOINT DESCRIPTORS done" << endl;
 
                     /* TRACK 3D OBJECT BOUNDING BOXES */
 
@@ -279,7 +279,7 @@ int main(int argc, const char *argv[])
                     // store matches in current data frame
                     (dataBuffer.end() - 1)->bbMatches = bbBestMatches;
 
-                    cout << "#8 : TRACK 3D OBJECT BOUNDING BOXES done" << endl;
+                    //cout << "#8 : TRACK 3D OBJECT BOUNDING BOXES done" << endl;
 
                     /* COMPUTE TTC ON OBJECT IN FRONT */
 
