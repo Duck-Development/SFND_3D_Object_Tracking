@@ -271,34 +271,32 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
     std::map<int, int> mapper;
-    for (auto cbbi = 0; cbbi < currFrame.boundingBoxes.size(); ++cbbi)
+    for (auto pbbi = 0; pbbi < prevFrame.boundingBoxes.size(); ++pbbi)
     {
         mapper.clear();
-        auto &cbb = currFrame.boundingBoxes.at(cbbi);
+        auto &pbb = prevFrame.boundingBoxes.at(pbbi);
         for (auto cmi = 0; cmi < matches.size(); ++cmi)
         {
 
-            const auto ckpi = matches.at(cmi).trainIdx;
+            const auto pkpi = matches.at(cmi).queryIdx;
+            const auto pkp = prevFrame.keypoints.at(pkpi);
 
-            const auto ckp = currFrame.keypoints.at(ckpi);
-
-            if (cbb.roi.contains(ckp.pt))
+            if (pbb.roi.contains(pkp.pt))
             {
-                cbb.keypoints.push_back(ckp);
-                cbb.kptMatches.push_back(matches.at(cmi));
 
-                const auto pkpi = matches.at(cmi).queryIdx;
-                const auto pkp = prevFrame.keypoints.at(pkpi);
-                for (auto pbbi = 0; pbbi < prevFrame.boundingBoxes.size(); ++pbbi)
+
+                const auto ckpi = matches.at(cmi).trainIdx;
+                const auto ckp = currFrame.keypoints.at(ckpi);
+                for (auto cbbi = 0; cbbi < currFrame.boundingBoxes.size(); ++cbbi)
                 {
-                    const auto &pbb = prevFrame.boundingBoxes.at(pbbi);
-                    if (pbb.roi.contains(pkp.pt))
+                    const auto &cbb = currFrame.boundingBoxes.at(cbbi);
+                    if (cbb.roi.contains(ckp.pt))
                     {
-                        if (mapper.count(pbbi) == 0)
+                        if (mapper.count(cbbi) == 0)
                         {
-                            mapper[pbbi] = 0;
+                            mapper[cbbi] = 0;
                         }
-                        mapper[pbbi]++;
+                        mapper[cbbi]++;
                     }
                 }
             }
@@ -317,11 +315,13 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
         }
         if (bestCount > 0)
         {
-            bbBestMatches[cbbi] = bestMatch;
+            bbBestMatches[pbb.boxID ] = currFrame.boundingBoxes.at(bestMatch).boxID;
+            //std::cout << "boundingBox " << cbb.boxID <<  " beste mach bb " << prevFrame.boundingBoxes.at(bestMatch).boxID <<  " count "<<  bestCount << std::endl;
         }
         else
         {
-            std::cout << "no Match for BBI:" << cbbi << std::endl;
+            std::cout << "no Match for BBI:" << pbbi << std::endl;
         }
     }
+    
 }
