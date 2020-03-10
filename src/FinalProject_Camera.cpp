@@ -278,6 +278,8 @@ int main(int argc, const char *argv[])
 
                     // store matches in current data frame
                     (dataBuffer.end() - 1)->bbMatches = bbBestMatches;
+                    //auto size = (dataBuffer.end() - 1)->bbMatches.end() - (dataBuffer.end() - 1)->boundingBoxes.begin();
+                    //std::cout << "bestMetch size " << (dataBuffer.end() - 1)->bbMatches.size() << std::endl;
 
                     //cout << "#8 : TRACK 3D OBJECT BOUNDING BOXES done" << endl;
 
