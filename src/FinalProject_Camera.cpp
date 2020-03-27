@@ -109,8 +109,8 @@ int main(int argc, const char *argv[])
 
     /* MAIN LOOP OVER ALL IMAGES */
 
-    vector<string> det = {/*"HARRIS", "SHITOMASI", "ORB", */"SIFT"/*, "FAST", "BRISK", "AKAZE"*/};
-    vector<string> desc = {/*"BRISK", "BRIEF", "ORB", "FREAK", "AKAZE",*/ "SIFT"};
+    vector<string> det = {"HARRIS", "SHITOMASI", "ORB", "SIFT", "FAST", "BRISK", "AKAZE"};
+    vector<string> desc = {"BRISK", "BRIEF", "ORB", "FREAK", "AKAZE", "SIFT"};
 
     
 
