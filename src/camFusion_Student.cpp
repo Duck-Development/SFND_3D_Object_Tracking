@@ -225,22 +225,18 @@ double getStableDistLidar(std::vector<LidarPoint> lidarPoints)
 {
     //convert to 1D array
     double distX = std::numeric_limits<double>::max();
-    double remesion = 0;
     if (lidarPoints.size() > 0)
     {
-        for (const auto &item : lidarPoints)
-        {
-            remesion += item.r;
-        }
-        remesion /= static_cast<double>(lidarPoints.size());
+        // Sort by x dist
+        std::sort(lidarPoints.begin(), lidarPoints.end(), [](LidarPoint lhs, LidarPoint rhs) {
+        return lhs.x < rhs.x;  
+     });
 
-        for (const auto &item : lidarPoints)
-        {
-            if (remesion <=  item.r && distX > item.x)
-            {
-                distX = item.x;
-            }
-        }
+     distX = lidarPoints.at(lidarPoints.size()/2).x;
+
+
+
+
     }
     return distX;
 }

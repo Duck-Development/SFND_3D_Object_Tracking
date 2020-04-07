@@ -2,19 +2,16 @@ import sys
 import os
 
 def main():
-  frames ={};
+  frames ={}
   analyseCVS = ''
   
-  filepath = sys.argv[1];
+  filepath = sys.argv[1]
   print ("Open File")
   print (filepath)
   detector = ""
   descripor = "" 
   with open(filepath) as fp:
     for line in fp:
-      if line.startswith('*******************************'):
-        frame = 0;
-      
       if line.startswith('###Activ Detector: '):
         lineA = line.split('\n')
         lineA = lineA[0].split(' ')
@@ -30,7 +27,7 @@ def main():
         lineA = lineA[0].split(' ')
         frame = lineA[2]
         if not (frame in frames):
-          frames[frame] = {};
+          frames[frame] = {}
       
       if line.startswith('###LIDAR_TTC'):
         lineA = line.split('\n')
@@ -51,113 +48,98 @@ def main():
         cam_ttc = lineA[1]
         frames[frame][detector][descriptor]['CAM_TTC'] = cam_ttc
 
-    print( frames)    
-    exit(0)
+    #print( frames)    
+    #exit(0)
 
 ##full data parse ready
-    det = [ "HARRIS" , "SHITOMASI" , "ORB" , "SIFT" , "FAST", "BRISK" , "AKAZE"  ];
-    desc = [ "BRISK" ,  "BRIEF" ,  "ORB" , "FREAK",  "AKAZE" ,"SIFT"  ];
+    det = [ 'HARRIS' , 'SHITOMASI' , 'ORB' , 'SIFT' , 'FAST', 'BRISK' , 'AKAZE'  ]
+    desc = [ 'BRISK' ,  'BRIEF' ,  'ORB' , 'FREAK',  'AKAZE' ,'SIFT' , 'LIDAR' ]
 
   keyAnalyse = {}
+
+  framesHeader = ''
+  maxFramesNumber = 1
   
   for idx, value in frames.items():
+    framesHeader += ' Frame '
+    framesHeader += idx
+    framesHeader += ' ;'
+
+    locIdx = int(idx)
+    if maxFramesNumber < locIdx:
+      maxFramesNumber = locIdx
     for actDet in det:
       if (actDet in frames[idx]):
-        frames[idx][actDet]['keyTimeSum'] = 0
-        frames[idx][actDet]['keyTimeCnt'] = 0
+        #frames[idx][actDet]['keyTimeSum'] = 0
+        #frames[idx][actDet]['keyTimeCnt'] = 0
         if not (actDet in keyAnalyse):
           keyAnalyse[actDet]= {}
         #print (frames[idx][actDet])
         for actDesc in desc:  
           if(actDesc in frames[idx][actDet]):
-            #print(actDesc)
-            frames[idx][actDet]['keyTimeCnt'] += 1
-            frames[idx][actDet]['keyTimeSum'] += frames[idx][actDet][actDesc]['keyPointTime']
-            if not ('keyPointCnt' in frames[idx][actDet]):
-              frames[idx][actDet]['keyPointCnt']= frames[idx][actDet][actDesc]['keyPointCnt']
-            
+           
             if not (actDesc in keyAnalyse[actDet]):
               keyAnalyse[actDet][actDesc] = {}
   
             keyAnalyse[actDet][actDesc][idx] = {}
             #print (actDet +' ' +actDesc + ' ' + str(idx) )
-            keyAnalyse[actDet][actDesc][idx]['descriporTime'] =  frames[idx][actDet][actDesc]['descriporTime']
-            if ( 'match' in frames[idx][actDet][actDesc]):
-              keyAnalyse[actDet][actDesc][idx]['match'] =  frames[idx][actDet][actDesc]['match']
+            if not ('CAM_TTC' in frames[idx][actDet][actDesc] ):
+               keyAnalyse[actDet][actDesc][idx]['CAM_TTC']  = float('nan')
+            else :
+              keyAnalyse[actDet][actDesc][idx]['CAM_TTC'] =  frames[idx][actDet][actDesc]['CAM_TTC']
+            #keyAnalyse[actDet][actDesc][idx]['LIDAR_TTC'] =  frames[idx][actDet][actDesc]['LIDAR_TTC']
+
+          if actDesc == 'LIDAR':
+            if not (actDesc in keyAnalyse[actDet]):
+              keyAnalyse[actDet][actDesc] = {}
+            keyAnalyse[actDet][actDesc][idx] = {}
+            keyAnalyse[actDet][actDesc][idx]['CAM_TTC'] =  frames[idx][actDet][desc[0]]['LIDAR_TTC']
 
 
-        if frames[idx][actDet]['keyTimeCnt'] > 0:
-          frames[idx][actDet]['keyPointTimeAWG'] = str(frames[idx][actDet]['keyTimeSum']/float(frames[idx][actDet]['keyTimeCnt']))
-        else:
-          frames[idx][actDet]['keyPointTimeAWG'] = ' '
-          frames[idx][actDet]['keyPointCnt'] = str(0)
-        #if not (actDet in keyAnalyse):
-          #keyAnalyse[actDet]= {}
-        if not (idx in keyAnalyse[actDet]):
-          keyAnalyse[actDet][idx] = {}
-        keyAnalyse[actDet][idx]['keyPointTimeAWG'] = frames[idx][actDet]['keyPointTimeAWG'];
-        keyAnalyse[actDet][idx]['keyPointCnt'] = frames[idx][actDet]['keyPointCnt'];
         
         
 
   ExtrectorTime = 'Detector ExtrectorTime;\n'
   ExtrectorKpC =  ';\n;\n Detector Extrector Key Point count;\n'
-  DescriptorTime = ' Descriptor Extrection Time'
-  Match = ' Matched KeyPoint'
+  #DescriptorTime = ' Descriptor Extrection Time'
+  Match = ' TTC Time '
   
-  descriptorTime = ''
-  match = ''
-  Header = 'Detector ; Frame 1 ; Frame 2 ; Frame 3 ; Frame 4; Frame 5 ; Frame 6 ; Frame 7 ;Frame 8 ; Frame 9 ; Frame 10;\n'
-  HeaderB = 'Descriptor ; Frame 1 ; Frame 2 ; Frame 3 ; Frame 4; Frame 5 ; Frame 6 ; Frame 7 ;Frame 8 ; Frame 9 ; Frame 10;\n'
+  #descriptorTime = ''
+  CAM_TTC = ''
+  LIDAR_TTC = ' '
+  Header = 'Detector ; ' +  framesHeader  + ' \n'
+  HeaderB = 'Descriptor ; ' +  framesHeader  + '\n'
   ExtrectorTime += Header
   ExtrectorKpC  += Header
   
   
   #print (keyAnalyse)
+
   for actDect , value in keyAnalyse.items():
     ExtrectorTime += actDect
     ExtrectorKpC +=actDect
     ExtrectorTime += ' '
     ExtrectorKpC += ' '
     
-    descriptorTime += ';\n;\n' + actDect + DescriptorTime +' ;\n' + HeaderB
-    match += ';\n;\n' + actDect + Match +' ;\n' + HeaderB
+    #descriptorTime += ';\n;\n' + actDect + DescriptorTime +' ;\n' + HeaderB
+    CAM_TTC += ';\n;\n' + actDect + Match +' ;\n' + HeaderB
     
-    for i in range(1,11):
-      #print (i)
-      if (i in value):
-        #print (i)
-        ExtrectorTime += ' ; '
-        ExtrectorTime += str(value[i]['keyPointTimeAWG'])
-        ExtrectorKpC += ' ; '
-        ExtrectorKpC += str(value[i]['keyPointCnt'])
-      else:
-        ExtrectorTime += ' ; '
-        ExtrectorKpC += ' ; '
-    ExtrectorTime += ' ;\n '
-    ExtrectorKpC += ' ;\n '
-
     #analyse key points
     for actDesc in desc:
       if (actDesc in value ):
-        descriptorTime += actDesc + ' ; '
-        match += actDesc + ' ; '
-        for i in range (1,11):
-          if i in value[actDesc]:
-            if  'match'in value[actDesc][i]:
-              match += str(value[actDesc][i]['match']) + ' ; '
+        #descriptorTime += actDesc + ' ; '
+        CAM_TTC += actDesc + ' ; ;'
+        for i in range (1,maxFramesNumber+1):
+          locIDX = str(i)
+          if locIDX in value[actDesc]:
+            if  'CAM_TTC'in value[actDesc][locIDX]:
+              CAM_TTC += str(value[actDesc][locIDX]['CAM_TTC']) + ' ; '
             else:
-              match +=  ' ; '
-            if  'descriporTime'in value[actDesc][i]:
-              descriptorTime += str(value[actDesc][i]['descriporTime']) + ' ; '
-            else:
-              descriptorTime +=  ' ; '
-        match += ';\n'
-        descriptorTime+= ';\n'
-  analyseCVS+= ExtrectorTime
-  analyseCVS+= ExtrectorKpC
-  analyseCVS+= descriptorTime
-  analyseCVS+= match
+              CAM_TTC +=  ' ; '
+        CAM_TTC += ';\n'
+        #descriptorTime+= ';\n'
+
+  analyseCVS+= CAM_TTC
   analyseCVS = analyseCVS.replace('.', ',')
   
   
@@ -167,4 +149,4 @@ def main():
   f.close()
   #print (analyseCVS)
 if __name__ == '__main__':
-  main();
+  main()
