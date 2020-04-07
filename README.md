@@ -1,3 +1,19 @@
+
+FP.5 
+1 If the preceeding vehicle is moving for one frame faster then the ego vehicle the TTC gets negativ.
+2 If both vehicle stand still the TTC is getting to infinite
+3 Sometime the BBox containing the vehicle Left or Right so you get a wrong velocity messerment.
+
+FP6. 
+See Output.xlsx
+
+ the  Best conbiantion is the  detector SIFT/ descriptor SIFT it has the sammest Error
+ follwod by other SIFT detector and other descripors.
+
+ the frist non SIFT detector is the AKAZE / Freak combination.  
+
+
+
 # SFND 3D Object Tracking
 
 Welcome to the final project of the camera course. By completing all the lessons, you now have a solid understanding of keypoint detectors, descriptors, and methods to match them between successive images. Also, you know how to detect objects in an image using the YOLO deep-learning framework. And finally, you know how to associate regions in a camera image with Lidar points in 3D space. Let's take a look at our program schematic to see what we already have accomplished and what's still missing.
